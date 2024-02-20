@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	</head>
+	<body>
+		<title>猜数字数字</title>
+		<center>
+			<div>
+				<p>填写1~100范围内的数字</p>
+				<textarea id="sd_num" rows="1" cols="20"></textarea><br>
+				<button type="button" onclick="send()">猜测</button>
+			</div>
+			<p id="put"></p>
+		</center>
+		<script>
+console.log("CSZ-V0.1");
+	
+function send(){
+	// 获取
+	var userinput = document.getElementById("sd_num").value;
+	var sd = new XMLHttpRequest();
+	var url = "/f?num=" + userinput;
+	sd.addEventListener("load", (event) => {
+		if ( event.target.responseText == -1 ) document.getElementById("put").innerHTML="小了";
+		if ( event.target.responseText == 1 ) document.getElementById("put").innerHTML="大了";
+		if ( event.target.responseText == 0 ) document.getElementById("put").innerHTML="猜对了";
+    });
+	sd.addEventListener("error", (event) => {
+      alert("哎呀！出了一些问题。");
+    });
+    
+	sd.open("GET", url);
+	sd.send();
+}
+		</script>
+	</body>
+</html>
