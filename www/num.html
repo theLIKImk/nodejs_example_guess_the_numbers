@@ -2,9 +2,18 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<script src="cookie.js"></script>
+		<script>
+if(checkcookie()==false){
+	alert("哎呀！cookie创建失败了");
+}else{
+	if (cookieget("id") == "" || cookieget("id") == null ) cookieadd("id",getUuid(),999);
+	userid=cookieget("id");
+}
+		</script>
 	</head>
 	<body>
-		<title>猜数字数字</title>
+		<title>猜数字</title>
 		<center>
 			<div>
 				<p>填写1~100范围内的数字</p>
@@ -19,12 +28,17 @@ console.log("CSZ-V0.1");
 function send(){
 	// 获取
 	var userinput = document.getElementById("sd_num").value;
+	
+	//使用XMLHttpRequest发送
 	var sd = new XMLHttpRequest();
-	var url = "/f?num=" + userinput;
+	
+	//uuid为了防止冲突
+	var url = "/f?id=" + userid + "&num=" + userinput;
 	sd.addEventListener("load", (event) => {
 		if ( event.target.responseText == -1 ) document.getElementById("put").innerHTML="小了";
-		if ( event.target.responseText == 1 ) document.getElementById("put").innerHTML="大了";
-		if ( event.target.responseText == 0 ) document.getElementById("put").innerHTML="猜对了";
+		else if ( event.target.responseText == 1 ) document.getElementById("put").innerHTML="大了";
+		else if ( event.target.responseText == 0 ) document.getElementById("put").innerHTML="猜对了";
+		else document.getElementById("put").innerHTML="code:" + event.target.responseText;
     });
 	sd.addEventListener("error", (event) => {
       alert("哎呀！出了一些问题。");
