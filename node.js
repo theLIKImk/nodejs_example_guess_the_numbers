@@ -2,11 +2,15 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 
+//设定
 var htmldir = "/www";
 var port = 80;
 
+//初始化
 netreq=0;
 rm_num="";
+let user_ramdonnum={};
+put_str="NULL";
 
 // 创建服务器
 http.createServer( function (request, response) {  
@@ -56,10 +60,7 @@ http.createServer( function (request, response) {
 				response.write('<!DOCTYPE html><html><head><meta charset="utf-8"><style>.center {padding: 70px 0;text-align: center;}</style></head><body><h2><p class="center">Notfound</p></h2><p>' + err + '</p></body></html>'); 
 			}else{
 				// HTTP 状态码: 200 : OK
-				// Content Type: text/${headType}
-				//console.log("HeadType:" + headType + "\n");
-				
-				//根据文件类型更改头部
+				// Content Type: 根据文件类型更改头部
 				if (headType=="gif" || headType=="png" || headType=="jpg") {
 					//图片
 					response.writeHead(200, {'Content-Type': 'image/' + headType});
@@ -89,18 +90,25 @@ http.createServer( function (request, response) {
 		//头部
 		response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
 		
-		//随机数为空就随机一个
-		if (rm_num=="") {rm_num = Math.floor(Math.random()*101);console.log("--- Set number");}
-		
-		//校验数字并返回值：-1/0/1
-		if (pathpart.num > rm_num) {response.write("1");console.log("--> 1");}
-		if (pathpart.num < rm_num) {response.write("-1");console.log("--> -1");}
-		if (pathpart.num == rm_num) {
-			response.write("0");
-			rm_num = Math.floor(Math.random()*101);
-			console.log("--> 0");
-			console.log("--- Number right");
-			console.log("--- Now reset number");
+		if (pathpart.id == "" || pathpart.id == null || pathpart.id === undefined) {
+			//uuid为空就报错
+			response.write("-2")
+			console.log("--> -2");
+		} else {
+			//未找到此用户的随机数为空就随机一个
+			if (user_ramdonnum[pathpart.id] == "" || user_ramdonnum[pathpart.id] == null){
+				user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
+				console.log("create object" + pathpart.id);
+			}
+			
+			//校验数字并返回值：-1/0/1
+			if (pathpart.num > user_ramdonnum[pathpart.id]) {response.write("1");console.log("--> 1");}
+			if (pathpart.num < user_ramdonnum[pathpart.id]) {response.write("-1");console.log("--> -1");}
+			if (pathpart.num == user_ramdonnum[pathpart.id]) {
+				response.write("0");
+				user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
+				console.log("--> 0");
+			}
 		}
 		//  发送响应数据
 		response.end();
@@ -108,5 +116,6 @@ http.createServer( function (request, response) {
 }).listen(port);
  
 // 控制台会输出以下信息
-console.log('Server running at http://127.0.0.1:' + port + '/');
-console.log('-----------\n');
+console.log('OK! Server running at http://127.0.0.1:' + port + '/');
+console.log('____________________________________________\n');
+console.log('');
