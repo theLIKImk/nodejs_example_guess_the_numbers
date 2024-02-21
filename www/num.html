@@ -7,33 +7,118 @@
 if(checkcookie()==false){
 	alert("哎呀！cookie创建失败了");
 }else{
-	if (cookieget("id") == "" || cookieget("id") == null ) cookieadd("id",getUuid(),999);
+	if (cookieget("id") == "" || cookieget("id") == null ) cookieadd("id",getUuid(),10);
 	userid=cookieget("id");
+}
+
+window.onload=function(){
+	//隐藏聊天区域
+	document.getElementById("chat").style.display="none";
+	
+	//根据cookie自动填写文本框
+	if (cookieget("chatname") == null || cookieget("chatname") == "") {
+		document.getElementById("chatname").value = userid;
+	}else{
+		document.getElementById("chatname").value = cookieget("chatname");
+	}
 }
 		</script>
 	</head>
 	<body>
 		<title>猜数字</title>
 		<center>
-			<div>
+			<div id="game">
 				<p>填写1~100范围内的数字</p>
 				<textarea id="sd_num" rows="1" cols="20"></textarea><br>
 				<button type="button" onclick="send()">猜测</button>
+				<p id="put"></p>
 			</div>
-			<p id="put"></p>
+			<div id="showchat">
+				<button type="button" onclick="showchat()">无聊就聊天</button>
+			</div>
+			<div id="chat">
+				<hr>
+				<textarea id="chatbox" rows="7" cols="80" readonly="true"></textarea><br>
+				名字：<textarea id="chatname" rows="1" cols="10"></textarea>
+				消息：<textarea id="chatmsg" rows="1" cols="30"></textarea>
+				<button type="button" onclick="send_msg()">发送</button><br>
+				<button type="button" onclick="hidechat()">收起</button>
+			</div>
 		</center>
 		<script>
 console.log("CSZ-V0.1");
+
+function showchat(){
+	document.getElementById("showchat").style.display = "none";
+	document.getElementById("chat").style.display = "";
+}
+
+function hidechat(){
+	document.getElementById("showchat").style.display = "";
+	document.getElementById("chat").style.display = "none";
+}
+
+function getchatmsg(){
+	//刷新聊天列表
+	chatbox = document.getElementById("chatbox");
+	var getlist = new XMLHttpRequest();
+	getlist.open("GET", "/chatlist");
+	getlist.send();
 	
-function send(){
-	// 获取
-	var userinput = document.getElementById("sd_num").value;
+	getlist.addEventListener("load", (event) => {
+		//JSON 转换对象/数组	
+		var chatlist=JSON.parse(event.target.responseText);
+		
+		//列好格式在文本框里面
+		var chatoutput ="";
+		for (var i=0;i<chatlist.length;i++) {
+			chatoutput = chatoutput + chatlist[i].name + ":" + chatlist[i].msg +"\n";
+		}
+		
+		//输出
+		document.getElementById("chatbox").value = chatoutput;
+		
+		//滚动条自动最底端
+		chatbox.scrollTop = chatbox.scrollHeight;
+	});
+}
+
+function send_msg(){
+	//获取
+	chatname = document.getElementById("chatname").value;
+	chatmsg = document.getElementById("chatmsg").value;
+	
+	//发送时候清空
+	document.getElementById("chatmsg").value="";
+	
+	//写入cookie
+	cookieadd("chatname",chatname,9999);
 	
 	//使用XMLHttpRequest发送
 	var sd = new XMLHttpRequest();
 	
 	//uuid为了防止冲突
-	var url = "/f?id=" + userid + "&num=" + userinput;
+	var url = "/f?id=" + userid + "&type=chat&chatname=" + chatname + "&chatmsg=" + chatmsg;
+	sd.addEventListener("load", (event) => {
+		//成功后刷新列表
+		getchatmsg();
+	});
+
+	sd.addEventListener("error", (event) => {
+      alert("哎呀！出了一些问题。");
+    });
+    
+	sd.open("GET", url);
+	sd.send();
+}
+
+function send(){
+	userinput = document.getElementById("sd_num").value;
+	//使用XMLHttpRequest发送
+	var sd = new XMLHttpRequest();
+	
+	//uuid为了防止冲突
+	var url = "/f?id=" + userid + "&type=num&num=" + userinput;
 	sd.addEventListener("load", (event) => {
 		if ( event.target.responseText == -1 ) document.getElementById("put").innerHTML="小了";
 		else if ( event.target.responseText == 1 ) document.getElementById("put").innerHTML="大了";
@@ -47,6 +132,9 @@ function send(){
 	sd.open("GET", url);
 	sd.send();
 }
+
+//自动刷新
+setInterval(getchatmsg, 1000);
 		</script>
 	</body>
 </html>
