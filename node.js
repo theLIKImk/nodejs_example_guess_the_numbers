@@ -8,8 +8,11 @@ var port = 80;
 
 //初始化
 netreq=0;
+chat_list_num=0;
 rm_num="";
 let user_ramdonnum={};
+let single_msg={};
+chat_list=new Array();
 put_str="NULL";
 
 // 创建服务器
@@ -32,6 +35,13 @@ http.createServer( function (request, response) {
 		//表单
 		console.log("["+netreq+" FORM] "+pathval);
 		var dypage=true;
+	} else if ( pathname == "/chatlist" ){
+		//聊天列表
+		console.log("["+netreq+" CHATLIST] ");
+		response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
+		response.write(JSON.stringify(chat_list));
+		response.end();
+		return;
 	} else {
 		//输出信息
 		console.log("["+netreq+"]"+htmldir + pathname);
@@ -62,8 +72,6 @@ http.createServer( function (request, response) {
 				// HTTP 状态码: 200 : OK
 				// Content Type: 根据文件类型更改头部
 				if (headType=="gif" || headType=="png" || headType=="jpg") {
-					//图片
-					response.writeHead(200, {'Content-Type': 'image/' + headType});
 				} else if (headType=="svg") {
 					//矢量图像
 					response.writeHead(200, {'Content-Type': 'image/svg+xml'});
@@ -87,34 +95,53 @@ http.createServer( function (request, response) {
 	} else {
 		//否则处理表单
 		
-		//头部
 		response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-		
-		if (pathpart.id == "" || pathpart.id == null || pathpart.id === undefined) {
-			//uuid为空就报错
-			response.write("-2")
-			console.log("--> -2");
-		} else {
-			//未找到此用户的随机数为空就随机一个
-			if (user_ramdonnum[pathpart.id] == "" || user_ramdonnum[pathpart.id] == null){
-				user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
-				console.log("create object" + pathpart.id);
-			}
+		if (pathpart.type == "num" ) {
 			
-			//校验数字并返回值：-1/0/1
-			if (pathpart.num > user_ramdonnum[pathpart.id]) {response.write("1");console.log("--> 1");}
-			if (pathpart.num < user_ramdonnum[pathpart.id]) {response.write("-1");console.log("--> -1");}
-			if (pathpart.num == user_ramdonnum[pathpart.id]) {
-				response.write("0");
-				user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
-				console.log("--> 0");
+			//数字
+			if (pathpart.id == "" || pathpart.id == null || pathpart.id === undefined) {
+				//uuid为空就报错
+				response.write("-2")
+				console.log("--> -2");
+			} else {
+				//未找到此用户的随机数为空就随机一个
+				if (user_ramdonnum[pathpart.id] == "" || user_ramdonnum[pathpart.id] == null){
+					user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
+					console.log("create object" + pathpart.id);
+				}
+				
+				//校验数字并返回值：-1/0/1
+				if (pathpart.num > user_ramdonnum[pathpart.id]) {response.write("1");console.log("--> 1");}
+				if (pathpart.num < user_ramdonnum[pathpart.id]) {response.write("-1");console.log("--> -1");}
+				if (pathpart.num == user_ramdonnum[pathpart.id]) {
+					response.write("0");
+					user_ramdonnum[pathpart.id] = rm_num = Math.floor(Math.random()*101);
+					console.log("--> 0");
+				}
 			}
+		} else if (pathpart.type == "chat" ) {
+			
+			//聊天
+			let single_msg={};
+			single_msg["name"]=pathpart.chatname;
+			single_msg["msg"]=pathpart.chatmsg;
+			chat_list[chat_list_num] = single_msg;
+			chat_list_num = chat_list_num + 1;
+			
+			response.write("0");
+			console.log("--> CHAT");
+		} else {
+			response.write("-3");
+			console.log("--> -3");
 		}
+		
 		//  发送响应数据
 		response.end();
 	}
 }).listen(port);
- 
+
+
+
 // 控制台会输出以下信息
 console.log('OK! Server running at http://127.0.0.1:' + port + '/');
 console.log('____________________________________________\n');
