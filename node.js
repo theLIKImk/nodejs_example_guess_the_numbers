@@ -1,18 +1,24 @@
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
+var formidable = require('formidable'); 
 
 //设定
-var htmldir = "/www";
-var port = 80;
+const htmldir = "/www";
+const port = 80;
+const chat_page_msg_item=51;
 
-//初始化
+//初始化变量
 netreq=0;
-chat_list_num=0;
+
+chat_page_item_num=0;
+chat_page_num=0;
+chat_list=new Array();
+chat_page_item=new Array();
+let single_msg={};
+
 rm_num="";
 let user_ramdonnum={};
-let single_msg={};
-chat_list=new Array();
 put_str="NULL";
 
 // 创建服务器
@@ -36,10 +42,20 @@ http.createServer( function (request, response) {
 		console.log("["+netreq+" FORM] "+pathval);
 		var dypage=true;
 	} else if ( pathname == "/chatlist" ){
-		//聊天列表
-		console.log("["+netreq+" CHATLIST] ");
-		response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-		response.write(JSON.stringify(chat_list));
+	
+		//获取聊天列表
+		//console.log("["+netreq+" CHATLIST] ");
+		response.writeHead(200, {'Content-Type': 'application/json'});
+		
+		if (pathpart.page==undefined || pathpart.page==null || pathpart.page=="" ){
+			response.write(JSON.stringify(chat_page_item));
+		} else {
+			if (chat_list[pathpart.page]==undefined) {
+				response.write("[]");
+			}else{
+				response.write(JSON.stringify(chat_list[pathpart.page]));
+			}
+		}
 		response.end();
 		return;
 	} else {
@@ -125,11 +141,24 @@ http.createServer( function (request, response) {
 			let single_msg={};
 			single_msg["name"]=pathpart.chatname;
 			single_msg["msg"]=pathpart.chatmsg;
-			chat_list[chat_list_num] = single_msg;
-			chat_list_num = chat_list_num + 1;
 			
+			chat_page_item[chat_page_item_num] = single_msg;
+			chat_list[chat_page_num] = chat_page_item;
+			chat_page_item_num = chat_page_item_num + 1;
+			
+			//自动分页
+			if (chat_page_item_num == chat_page_msg_item) {
+				chat_page_num = chat_page_num + 1;
+				chat_page_item_num = 1;
+				chat_page_item=[];
+				
+				//最后一条写入新页面第一条
+				chat_page_item[0] = single_msg;
+				chat_list[chat_page_num] =chat_page_item[0];
+			}
 			response.write("0");
-			console.log("--> CHAT");
+			console.log("--> Chat Add[" + chat_page_num + "][" + chat_page_item_num + "[");
+			
 		} else {
 			response.write("-3");
 			console.log("--> -3");
